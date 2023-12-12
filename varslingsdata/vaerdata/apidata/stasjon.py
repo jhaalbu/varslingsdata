@@ -1,9 +1,10 @@
 import json
 from .frost2df import frost2df, obs2df
 from datetime import datetime, timedelta
+from dateutil import parser, tz
+import pandas as pd
 
-
-def hent_frost(stasjonsid, elements, dager_tidligere=5, timeoffsets='PT0H'):
+def hent_frost(stasjonsid, dager_tidligere, element, timeoffsets='PT0H'):
     '''Funksjon som henter data fra frost.met.no og returnerer en liste med data for en gitt stasjon.
     Funksjonen henter data fra frost.met.no. Den bruker frost2df for å håndtere apikall.
 
@@ -24,19 +25,27 @@ def hent_frost(stasjonsid, elements, dager_tidligere=5, timeoffsets='PT0H'):
     # Konverterer til string
     now_str = now.isoformat()
     earlier_date_str = earlier_date.isoformat()
-    elements_str = ', '.join(elements)
     parameters = {
     'sources':'SN' + str(stasjonsid),
-    'elements': elements_str,
+    'elements': element,
     'referencetime': earlier_date_str + '/' + now_str,
     'timeoffsets': timeoffsets
     }
 
     df = obs2df(parameters=parameters, verbose=True)
-    grouped = df.groupby('elementId')
+    df['referenceTime'] = df['referenceTime'].dt.tz_localize(None)
+    df.set_index('referenceTime', inplace=True)
+    df.sort_index(inplace=True)
+    df['value'] = pd.to_numeric(df['value'], errors='coerce')
+    # Resample to hourly frequency
+    df_hourly = df.resample('H')
 
-    værhist = {}
-    for element in elements:
-        værhist[element] = grouped.get_group(element)
+    # Resample to hourly frequency and calculate the mean or sum
+    if element in ['air_temperature', 'surface_snow_thickness']:
+        df_hourly = df['value'].resample('H').mean().to_frame()
+    elif element == 'sum(precipitation_amount PT10M)':
+        df_hourly = df['value'].resample('H').sum().to_frame()
 
-    return værhist
+    df_hourly.reset_index(inplace=True)
+
+    return df_hourly['referenceTime'].to_list(), df_hourly['value'].to_list()

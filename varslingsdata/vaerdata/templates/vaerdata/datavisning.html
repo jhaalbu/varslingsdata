@@ -4,11 +4,11 @@
     <title>Data Visualization</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
+
 <body>
     <div class="container">
         <!-- Data -->
-        <h2>Andre data</h2>
+        <h2>Snowsense</h2>
                 <!-- Loop through your data and display it here -->
                 <table class="table table-striped table-bordered">
                     <thead>
@@ -26,38 +26,78 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>{{ snowsense_data.0 }}</td>
-                            <td>{{ snowsense_data.1 }}</td>
-                            <td>{{ snowsense_data.2 }}</td>
-                            <td>{{ snowsense_data.3 }}</td>
-                            <td>{{ snowsense_data.4 }}</td>
-                            <td>{{ snowsense_data.5 }}</td>
-                            <td>{{ snowsense_data.6 }}</td>
-                            <td>{{ snowsense_data.7 }}</td>
-                            <td>{{ snowsense_data.8 }}</td>
+                            <td id="location"></td>
+                            <td id="time"></td>
+                            <td id="temperature"></td>
+                            <td id="wind"></td>
+                            <td id="snowdepth"></td>
+                            <td id="snowdepth_12h"></td>
+                            <td id="snowdepth_24h"></td>
+                            <td id="snowdepth_mtp"></td>
+                            <td id="snowdepth_atp"></td>
                         </tr>
                     </tbody>
                 </table>
 
         <!-- First Graph -->
-        <h2>Værplott 1</h2>
-        <div id="graph1">                
-            <script>
-                var graph1 = document.getElementById('graph1');
-                var data1 = JSON.parse('{{ graph1|escapejs }}');
-                Plotly.newPlot(graph1, data1);
-            </script>
-        </div>
+        <h2>Vær fra YR</h2>
+        <div id="graph1"></div>
 
         <!-- Second Graph -->
-        <h2>Værplott 2</h2>
-        <div id="graph2">
-            <script>
-                var graph2 = document.getElementById('graph2');
-                var data2 = JSON.parse('{{ graph2|escapejs }}');
-                Plotly.newPlot(graph2, data2);
-            </script>
-        </div>
+        <h2>Stasjonsdata</h2>
+        <div id="graph2"></div>
     </div>
 </body>
+<script>
+    window.onload = function() {
+        fetch('{% url "get_snowsense" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging purposes
+                // Update the table with the snowsense data
+                document.getElementById('location').textContent = data.snowsense_data[0];
+                document.getElementById('time').textContent = data.snowsense_data[1];
+                document.getElementById('temperature').textContent = data.snowsense_data[2];
+                document.getElementById('wind').textContent = data.snowsense_data[3];
+                document.getElementById('snowdepth').textContent = data.snowsense_data[4];
+                document.getElementById('snowdepth_12h').textContent = data.snowsense_data[5];
+                document.getElementById('snowdepth_24h').textContent = data.snowsense_data[6];
+                document.getElementById('snowdepth_mtp').textContent = data.snowsense_data[7];
+                document.getElementById('snowdepth_atp').textContent = data.snowsense_data[8];
+                // ... (update the rest of the table cells)
+            })
+            fetch('{% url "get_graph1" %}')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); // For debugging purposes
+
+                    // Check if the data is in the correct format
+                    // if (!Array.isArray(data.graph1)) {
+                    //     console.error('The graph data is not an array.');
+                    //     return;
+                    // }
+
+                    // Plot the first graph
+                    var graph1 = document.getElementById('graph1');
+                    Plotly.newPlot(graph1, data.graph1);
+                })
+            fetch('{% url "get_graph2" %}')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); // For debugging purposes
+
+                    // Check if the data is in the correct format
+                    // if (!Array.isArray(data.graph2)) {
+                    //     console.error('The graph data is not an array.');
+                    //     return;
+                    // }
+
+                    // Plot the second graph
+                    var graph2 = document.getElementById('graph2');
+                    Plotly.newPlot(graph2, data.graph2);
+                })
+                .catch(error => console.error('Error:', error));
+
+    };
+</script>
 </html>
