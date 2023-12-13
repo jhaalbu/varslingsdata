@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -46,7 +47,10 @@
         <!-- Second Graph -->
         <h2>Stasjonsdata</h2>
         <div id="graph2"></div>
+        <div id="graph3"></div>
+        <div id="windrose"></div>
     </div>
+
 </body>
 <script>
     window.onload = function() {
@@ -66,37 +70,43 @@
                 document.getElementById('snowdepth_atp').textContent = data.snowsense_data[8];
                 // ... (update the rest of the table cells)
             })
-            fetch('{% url "get_graph1" %}')
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data); // For debugging purposes
+        fetch('{% url "get_graph1" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging purposes
 
-                    // Check if the data is in the correct format
-                    // if (!Array.isArray(data.graph1)) {
-                    //     console.error('The graph data is not an array.');
-                    //     return;
-                    // }
+                // Plot the first graph
+                var graph1 = document.getElementById('graph1');
+                Plotly.newPlot(graph1, data.graph1);
+            })
+        fetch('{% url "get_graph2" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging
 
-                    // Plot the first graph
-                    var graph1 = document.getElementById('graph1');
-                    Plotly.newPlot(graph1, data.graph1);
-                })
-            fetch('{% url "get_graph2" %}')
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data); // For debugging purposes
 
-                    // Check if the data is in the correct format
-                    // if (!Array.isArray(data.graph2)) {
-                    //     console.error('The graph data is not an array.');
-                    //     return;
-                    // }
+                var graph2 = document.getElementById('graph2');
+                Plotly.newPlot(graph2, data.graph2);
+            })
+            .catch(error => console.error('Error:', error));
+        fetch('{% url "get_graph3" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging purposes
 
-                    // Plot the second graph
-                    var graph2 = document.getElementById('graph2');
-                    Plotly.newPlot(graph2, data.graph2);
-                })
-                .catch(error => console.error('Error:', error));
+                var graph3 = document.getElementById('graph3');
+                Plotly.newPlot(graph3, data.graph3);
+            })
+            .catch(error => console.error('Error:', error));
+        fetch('{% url "get_windrose" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging
+
+                    var graph3 = document.getElementById('windrose');
+                Plotly.newPlot(windrose, data.windrose);
+            })
+        .catch(error => console.error('Error:', error));
 
     };
 </script>
