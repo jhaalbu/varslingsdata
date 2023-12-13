@@ -58,26 +58,63 @@ def hent_frost(stasjonsid, dager_tidligere, element, timeoffsets='PT0H'):
     df_hourly['value'] = df_hourly['value'].replace({np.nan: None})
     return df_hourly['referenceTime'].to_list(), df_hourly['value'].to_list()
 
+def assign_direction_to_bin(value):
+    if value >= 337.5 or value < 22.5:
+        return 'Nord'
+    elif value < 67.5:
+        return 'N-E'
+    elif value < 112.5:
+        return 'Øst'
+    elif value < 157.5:
+        return 'S-Ø'
+    elif value < 202.5:
+        return 'Sør'
+    elif value < 247.5:
+        return 'S-V'
+    elif value < 292.5:
+        return 'Vest'
+    elif value < 337.5:
+        return 'N-V'
+
 def vindrose(stasjonsid, dager_tidligere):
+    """
+    Denne funksjonen henter vindhastighet og vindretning fra Frost API for en gitt stasjon og tidsperiode.
+    Den kombinerer deretter disse dataene i en enkelt DataFrame, og kategoriserer vindhastigheten og vindretningen i binner.
+    Til slutt, den returnerer en pivotert DataFrame som viser frekvensen av vindhastighet og retning kombinasjoner.
+
+    Parametere:
+    stasjonsid (str): IDen til stasjonen som dataene skal hentes fra.
+    dager_tidligere (int): Antall dager tilbake i tid for å hente data.
+
+    Returnerer:
+    pivot_df (DataFrame): En DataFrame som viser frekvensen av vindhastighet og retning kombinasjoner.
+    """
     df_wind_speed = frost_api(stasjonsid, dager_tidligere, element='wind_speed', timeoffsets='PT0H')
     df_wind_from_direction = frost_api(stasjonsid, dager_tidligere, element='wind_from_direction', timeoffsets='PT0H')
+    df_wind_speed = df_wind_speed.rename(columns={'value': 'wind_speed'})
+    df_wind_from_direction = df_wind_from_direction.rename(columns={'value': 'wind_from_direction'})
 
-    bin_edges = [337.5, 22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]
-    bin_labels = ['North', 'N-E', 'East', 'S-E', 'South', 'S-W', 'West', 'N-W']
+    df_combined = df_wind_speed[['wind_speed']].merge(df_wind_from_direction[['wind_from_direction']], left_index=True, right_index=True)
 
 
-    # Assign each wind direction to a bin
-    df_wind_from_direction['direction_bin'] = pd.cut(df_wind_from_direction['value'], bins=bin_edges, labels=bin_labels, right=False)
+    speed_bins = [0, 4, 8, 11, 14, 17, 20, 25, float('inf')]
+    speed_labels = ['0-4 m/s', '4-8 m/s', '8-11 m/s', '11-14 m/s', '14-17 m/s', '17-20 m/s', '20-25 m/s', '>25 m/s']
 
-    # Calculate the frequency of each bin
-    frequency_df = df_wind_from_direction['direction_bin'].value_counts().reindex(bin_labels).fillna(0)
+    df_combined['direction_bin'] = df_combined['wind_from_direction'].apply(assign_direction_to_bin)
+    df_combined['speed_bin'] = pd.cut(df_combined['wind_speed'], bins=speed_bins, labels=speed_labels, right=True)
 
-    # Convert the frequency series to a dataframe
-    frequency_df = frequency_df.reset_index()
-    frequency_df.columns = ['Direction', 'Frequency']
-    print(df_wind_from_direction)
-    print(frequency_df)
-    return df_wind_speed, frequency_df
+    frequency_2d_df = df_combined.groupby(['direction_bin', 'speed_bin']).size().reset_index(name='Frequency')
+
+    # Pivot the table to have wind speeds as columns and directions as rows
+    pivot_df = frequency_2d_df.pivot(index='direction_bin', columns='speed_bin', values='Frequency')
+
+    # Replace NaNs with 0s
+    pivot_df = pivot_df.fillna(0).reset_index()
+
+    pivot_df
+
+    print(pivot_df)
+    return pivot_df
 
 
     

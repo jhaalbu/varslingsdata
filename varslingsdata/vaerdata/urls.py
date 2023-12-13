@@ -11,4 +11,6 @@ urlpatterns = [
     path("get_graph3/", views.get_graph3, name="get_graph3"),
     path("get_windrose/", views.get_windrose, name="get_windrose"),
     path("get_windrose2/", views.get_windrose2, name="get_windrose2"),
+    path("get_windrose3/", views.get_windrose3, name="get_windrose3"),
+    
 ]

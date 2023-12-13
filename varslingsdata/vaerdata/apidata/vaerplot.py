@@ -3,7 +3,7 @@ import plotly.io as pio
 import plotly.utils as pu
 from metno_locationforecast import Place, Forecast
 from .met import metno_temperatur, metno_nedbør
-from .stasjon import hent_frost
+from .stasjon import hent_frost, vindrose
 import json
 from datetime import datetime, timedelta
 from dateutil.parser import parse
@@ -254,7 +254,7 @@ def frostplot_vind(stasjonsid, dager, elements):
 def frost_windrose(stasjonsid, dager):
     retning_tekst = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
     retning_grader = [0, 22.5, 45, 72.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5]
-    vind_hastighet = ['0-2 m/s', '2-4 m/s', '4-6 m/s', '6-8 m/s', '8-10 m/s', '10-12 m/s', '12-14 m/s', '14-25 m/s', '>25 m/s']
+    vind_hastighet = ['0-4 m/s', '6-8 m/s', '9-11 m/s', '11-14 m/s', '15-17 m/s', '17-20 m/s', '20-25 m/s', '>25 m/s']
 
     tid, retning = hent_frost(stasjonsid, dager, 'wind_speed', timeoffsets='PT0H')
     tid, hastighet = hent_frost(stasjonsid, dager, 'wind_from_direction', timeoffsets='PT0H')
@@ -338,3 +338,37 @@ def windrose_test(request):
     # )
     # fig.show()
     return {'data': traces, 'layout': layout}
+
+def windrose_test2(stasjonsid, dager_tidligere):
+    #TODO: Må finne ut av dette med plotly.to_json greiene. Går det greit å sende til frontent?
+    df = vindrose(stasjonsid, dager_tidligere)
+    vind_hastighet = ['0-4 m/s', '6-8 m/s', '9-11 m/s', '11-14 m/s', '15-17 m/s', '17-20 m/s', '20-25 m/s', '>25 m/s']
+    # Assuming df is your DataFrame
+    traces = []
+    for speed_bin in vind_hastighet:
+        traces.append(go.Barpolar(
+            r=df['speed_bin'].tolist(),
+            theta=df['direction_bin'].tolist(),
+            name=speed_bin,
+            marker_line_color="black",
+            marker_line_width=0.5,
+            opacity=0.8
+        ))
+    layout = {
+        'title': 'Vindrose',
+        'font': {
+            'size': 16
+        },
+        'polar': {
+            'radialaxis': {
+                'ticksuffix': '%',
+            },
+            'angularaxis': {
+                'direction' : 'clockwise',
+                'rotation' : 90
+            }
+        }
+    }
+    # Convert traces to JSON
+    traces_json = json.dumps([trace.to_plotly_json() for trace in traces])
+    return {'data': traces_json, 'layout': layout}

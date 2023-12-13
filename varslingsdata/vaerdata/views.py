@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from .apidata.snowsense import hent_snowsense
 from .apidata.stasjon import hent_frost, vindrose
-from .apidata.vaerplot import vaerplot, frostplot_temp_nedbør_snø, met_plot, frostplot_vind, frost_windrose, windrose_test
+from .apidata.vaerplot import vaerplot, frostplot_temp_nedbør_snø, met_plot, frostplot_vind, frost_windrose, windrose_test, windrose_test2
 
 værstasjoner = {
     58705: {'eigar': 'SVV', 
@@ -90,6 +90,13 @@ def get_windrose2(request):
         'wind_speed': df_wind_speed.to_json(),
         'wind_from_direction': df_wind_from_direction.to_json()
 
+    })
+
+def get_windrose3(request):
+    vindrose = windrose_test2(58703, 5)
+
+    return JsonResponse({
+        'vindrose': vindrose
     })
 
 def test(request):

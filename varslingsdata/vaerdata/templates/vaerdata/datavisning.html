@@ -49,6 +49,7 @@
         <div id="graph2"></div>
         <div id="graph3"></div>
         <div id="windrose"></div>
+        <div id="windrose3"></div>
     </div>
 
 </body>
@@ -107,6 +108,14 @@
                 Plotly.newPlot(windrose, data.windrose);
             })
         .catch(error => console.error('Error:', error));
+        fetch('{% url "get_windrose3" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging
+
+                    var graph3 = document.getElementById('windrose3');
+                Plotly.newPlot(windrose3, data.vindrose);
+            })
 
     };
 </script>
