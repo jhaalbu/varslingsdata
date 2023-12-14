@@ -30,7 +30,7 @@ def frost_api(stasjonsid, dager_tidligere, element, timeoffsets='PT0H'):
     return df
 
 
-def hent_frost(stasjonsid, dager_tidligere, element, timeoffsets='PT0H'):
+def bearbeid_frost(df, element):
     '''Funksjon som henter data fra frost.met.no og returnerer en liste med data for en gitt stasjon.
     Funksjonen henter data fra frost.met.no. Den bruker frost2df for å håndtere apikall.
 
@@ -43,8 +43,7 @@ def hent_frost(stasjonsid, dager_tidligere, element, timeoffsets='PT0H'):
     Returns:
         dataframe: Dataframe med data for en gitt stasjon.
     '''
-    df = frost_api(stasjonsid, dager_tidligere, element, timeoffsets)
-    # Resample to hourly frequency
+
     df_hourly = df.resample('H')
     
 
@@ -57,6 +56,16 @@ def hent_frost(stasjonsid, dager_tidligere, element, timeoffsets='PT0H'):
     df_hourly.reset_index(inplace=True)
     df_hourly['value'] = df_hourly['value'].replace({np.nan: None})
     return df_hourly['referenceTime'].to_list(), df_hourly['value'].to_list()
+
+def frost_samledf(df_liste):
+    pivotliste = []
+    for df in df_liste:
+        df = df.set_index('referenceTime')
+        df_pivot = df.pivot(columns='elementId', values='value')
+        pivotliste.append(df_pivot)
+    resultat = pd.concat(pivotliste, axis=1)
+    return resultat
+
 
 def assign_direction_to_bin(value):
     if value >= 337.5 or value < 22.5:

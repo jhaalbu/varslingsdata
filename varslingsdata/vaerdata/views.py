@@ -1,8 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from .apidata.snowsense import hent_snowsense
-from .apidata.stasjon import hent_frost, vindrose
-from .apidata.vaerplot import vaerplot, frostplot_temp_nedbør_snø, met_plot, frostplot_vind, frost_windrose, windrose_test, windrose_test2, scatter_plot, vindrose_stasjon
+from .apidata.vaerplot import vaerplot, met_plot, vindrose_stasjon, met_og_ein_stasjon_plot
 import json
 
 værstasjoner = {
@@ -24,7 +23,6 @@ værstasjoner = {
                 'wind_speed',
                 'wind_from_direction',
                 'surface_snow_thickness',
-                'accumulated(precipitation_amount)',
                 ]},
     15951: {'eigar': 'SVV', 
             'navn':'Rv15 Breidalen II', 
@@ -36,7 +34,6 @@ værstasjoner = {
                 'wind_speed',
                 'wind_from_direction',
                 'surface_snow_thickness',
-                'accumulated(precipitation_amount)',
                 ]},
 }
 
@@ -85,54 +82,12 @@ def get_graph1(request):
         'fig_json': fig_json
     })
 
-
-def get_graph2(request):
-    graph2 = frostplot_temp_nedbør_snø(58703, 20, værstasjoner[58703]['elements'])
-
+def met_frost_plot1(request):
+    fig_df = met_og_ein_stasjon_plot(værstasjoner[58703]['lat'], værstasjoner[58703]['lon'], værstasjoner[58703]['navn'], værstasjoner[58703]['altitude'], 58703, værstasjoner[58703]['elements'])
     return JsonResponse({
-        'graph2': graph2
+        'fig_df': fig_df
     })
-
-def get_graph3(request):
-    graph3 = frostplot_vind(58703, 20, værstasjoner[58703]['elements'])
-
-    return JsonResponse({
-        'graph3': graph3
-    })
-
-def get_windrose(request):
-    windrose = windrose_test()
-
-    return JsonResponse({
-        'windrose': windrose
-    })
-
-def get_windrose2(request):
-    df_wind_speed, df_wind_from_direction = vindrose(58703, 5)
-
-    return JsonResponse({
-        'wind_speed': df_wind_speed.to_json(),
-        'wind_from_direction': df_wind_from_direction.to_json()
-
-    })
-
-def get_windrose3(request):
-    vindrose = windrose_test2(58703, 5)
-
-    return JsonResponse({
-        'vindrose': vindrose
-    })
-
-
-def lag_graf(request):
-    graf = scatter_plot(request)
-
-    return JsonResponse({
-        'graf': graf
-    })
-
-def test(request):
-    return HttpResponse("Hello, world. Test varsling")
+    
 
 def vindrose_stasjon_data(request):
     fig = vindrose_stasjon(58705, dager_tidligere=1)
