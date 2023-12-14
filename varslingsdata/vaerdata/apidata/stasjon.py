@@ -60,21 +60,21 @@ def hent_frost(stasjonsid, dager_tidligere, element, timeoffsets='PT0H'):
 
 def assign_direction_to_bin(value):
     if value >= 337.5 or value < 22.5:
-        return 'Nord'
+        return 'N'
     elif value < 67.5:
-        return 'N-E'
+        return 'NØ'
     elif value < 112.5:
-        return 'Øst'
+        return 'Ø'
     elif value < 157.5:
-        return 'S-Ø'
+        return 'SØ'
     elif value < 202.5:
-        return 'Sør'
+        return 'S'
     elif value < 247.5:
-        return 'S-V'
+        return 'SV'
     elif value < 292.5:
-        return 'Vest'
+        return 'V'
     elif value < 337.5:
-        return 'N-V'
+        return 'NV'
 
 def vindrose(stasjonsid, dager_tidligere):
     """
@@ -89,6 +89,8 @@ def vindrose(stasjonsid, dager_tidligere):
     Returnerer:
     pivot_df (DataFrame): En DataFrame som viser frekvensen av vindhastighet og retning kombinasjoner.
     """
+    direction_order = ['N', 'NØ', 'Ø', 'SØ', 'S', 'SV', 'V', 'NV']
+
     df_wind_speed = frost_api(stasjonsid, dager_tidligere, element='wind_speed', timeoffsets='PT0H')
     df_wind_from_direction = frost_api(stasjonsid, dager_tidligere, element='wind_from_direction', timeoffsets='PT0H')
     df_wind_speed = df_wind_speed.rename(columns={'value': 'wind_speed'})
@@ -105,16 +107,20 @@ def vindrose(stasjonsid, dager_tidligere):
 
     frequency_2d_df = df_combined.groupby(['direction_bin', 'speed_bin']).size().reset_index(name='Frequency')
 
-    # Pivot the table to have wind speeds as columns and directions as rows
+  # Pivot the table to have wind speeds as columns and directions as rows
     pivot_df = frequency_2d_df.pivot(index='direction_bin', columns='speed_bin', values='Frequency')
 
-    # Replace NaNs with 0s
-    pivot_df = pivot_df.fillna(0).reset_index()
+    # Replace NaNs with 0s and ensure all direction bins are present
+    pivot_df = pivot_df.reindex(direction_order, fill_value=0)
 
-    pivot_df
+    # Convert the index to a categorical with the specified order
+    pivot_df.index = pd.CategoricalIndex(pivot_df.index, categories=direction_order, ordered=True)
 
+    # Sorting by index is not needed since reindexing has already ordered the index as per `direction_order`
+
+    # Printing the pivot_df for verification
     print(pivot_df)
-    return pivot_df
 
+    return pivot_df
 
     

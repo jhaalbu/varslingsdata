@@ -50,6 +50,9 @@
         <div id="graph3"></div>
         <div id="windrose"></div>
         <div id="windrose3"></div>
+        <div id="graf"></div>
+        <div><img src="{{ yrsvg1 }}" alt="YR"></div>
+
     </div>
 
 </body>
@@ -78,7 +81,7 @@
 
                 // Plot the first graph
                 var graph1 = document.getElementById('graph1');
-                Plotly.newPlot(graph1, data.graph1);
+                Plotly.newPlot(graph1, data.fig_json);
             })
         fetch('{% url "get_graph2" %}')
             .then(response => response.json())
@@ -116,7 +119,17 @@
                     var graph3 = document.getElementById('windrose3');
                 Plotly.newPlot(windrose3, data.vindrose);
             })
+        fetch('{% url "lag_graf" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging
+
+                    var graph3 = document.getElementById('windrose3');
+                Plotly.newPlot(graf, data.graf);
+        })
 
     };
 </script>
 </html>
+
+vaerplot_graf

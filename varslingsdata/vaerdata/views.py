@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from .apidata.snowsense import hent_snowsense
 from .apidata.stasjon import hent_frost, vindrose
-from .apidata.vaerplot import vaerplot, frostplot_temp_nedbør_snø, met_plot, frostplot_vind, frost_windrose, windrose_test, windrose_test2
+from .apidata.vaerplot import vaerplot, frostplot_temp_nedbør_snø, met_plot, frostplot_vind, frost_windrose, windrose_test, windrose_test2, scatter_plot, vindrose_stasjon
+import json
 
 værstasjoner = {
     58705: {'eigar': 'SVV', 
@@ -43,8 +44,22 @@ andre_stasjoner = {
     'Stavbrekka': {'stasjonstype':'Snowsense', 'lat':62.0176, 'lon':7.375, 'altitude':1300}
 }
 # Create your views here.
+
 def index(request):
-    return render(request, 'vaerdata/datavisning.html')
+    yrsvg1 = 'https://www.yr.no/nb/innhold/1-2205713/meteogram.svg'  #Kvitenova
+    yrsvg2 = 'https://www.yr.no/nb/innhold/1-169829/meteogram.svg'
+
+    return render(request, 'vaerdata/vaerdata.html', {
+        'yrsvg1': yrsvg1,
+        'yrsvg2': yrsvg2,})
+
+def index_gammel(request):
+    yrsvg1 = 'https://www.yr.no/nb/innhold/1-2205713/meteogram.svg'  #Kvitenova
+    yrsvg2 = 'https://www.yr.no/nb/innhold/1-169829/meteogram.svg'
+
+    return render(request, 'vaerdata/datavisning.html', {
+        'yrsvg1': yrsvg1,
+        'yrsvg2': yrsvg2,})
 
 def get_snowsense(request):
     snowsense_data = hent_snowsense()
@@ -55,12 +70,21 @@ def get_snowsense(request):
         'snowsense_data': snowsense_data
     })
 
-def get_graph1(request):
-    graph1 = met_plot(værstasjoner[58703]['lat'], værstasjoner[58703]['lon'], navn=værstasjoner[58703]['navn'], altitude=værstasjoner[58703]['altitude'])
-    
+def vaer(request):
+    vaerplot_graf = vaerplot(værstasjoner[58703]['lat'], værstasjoner[58703]['lon'], værstasjoner[58703]['navn'], værstasjoner[58703]['altitude'], 58703, værstasjoner[58703]['elements'])
     return JsonResponse({
-        'graph1': graph1
+        'vaerplot_graf': vaerplot_graf
     })
+
+def get_graph1(request):
+    fig = met_plot(værstasjoner[58703]['lat'], værstasjoner[58703]['lon'], navn=værstasjoner[58703]['navn'], altitude=værstasjoner[58703]['altitude'])
+    
+    fig_json = json.loads(fig.to_json())
+
+    return JsonResponse({
+        'fig_json': fig_json
+    })
+
 
 def get_graph2(request):
     graph2 = frostplot_temp_nedbør_snø(58703, 20, værstasjoner[58703]['elements'])
@@ -77,7 +101,7 @@ def get_graph3(request):
     })
 
 def get_windrose(request):
-    windrose = windrose_test(request)
+    windrose = windrose_test()
 
     return JsonResponse({
         'windrose': windrose
@@ -99,5 +123,23 @@ def get_windrose3(request):
         'vindrose': vindrose
     })
 
+
+def lag_graf(request):
+    graf = scatter_plot(request)
+
+    return JsonResponse({
+        'graf': graf
+    })
+
 def test(request):
     return HttpResponse("Hello, world. Test varsling")
+
+def vindrose_stasjon_data(request):
+    fig = vindrose_stasjon(58705, dager_tidligere=1)
+    
+    fig_json = json.loads(fig.to_json())
+
+    return JsonResponse({
+        'fig_json': fig_json
+    })
+
