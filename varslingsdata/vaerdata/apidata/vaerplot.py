@@ -266,6 +266,7 @@ def vindrose_stasjon(stasjonsid, dager_tidligere):
     'SØ': 135,
     'S': 180,
     'SV': 225,
+    
     'V': 270,
     'NV': 315
     }
@@ -294,7 +295,75 @@ def vindrose_stasjon(stasjonsid, dager_tidligere):
     
     return fig
 
-def met_og_ein_stasjon_plot(lat, lon, navn, altitude, stasjonsid, elements,  dager_etter_met=2, dager_tidligere_frost=2):   
+# def met_og_ein_stasjon_plot(lat, lon, navn, altitude, stasjonsid, elements,  dager_etter_met=2, dager_tidligere_frost=2):   
+#     vaer = Place(navn, lat, lon, altitude)
+#     vaer_forecast = Forecast(vaer, user_agent)
+#     vaer_forecast.update()
+#     time_nebør, nedbør = metno_nedbør(vaer_forecast, dager_etter_met)
+#     nedbør_cumsum = np.cumsum(nedbør).tolist()
+#     time_temperatur, met_temperatur = metno_temperatur(vaer_forecast, dager_etter_met)
+
+
+#     df_temp = frost_api(stasjonsid, dager_tidligere_frost, elements, timeoffsets='PT0H')
+#     samledf = frost_samledf(df_temp)
+#     print('samledf')
+#     print(samledf)
+
+#     fig = go.Figure()
+#     fig.add_trace(go.Bar(x=time_nebør, y=nedbør, name='Nedbør (YR)', width=1000 * 3600 * 5, yaxis='y2'))
+#     fig.add_trace(go.Scatter(x=time_temperatur, y=met_temperatur, mode='lines', name='temperatur (YR)'))
+#     fig.add_trace(go.Scatter(x=time_nebør, y=nedbør_cumsum, mode='lines', name='Kumulativ nedbør (YR)', fill='tozeroy', fillcolor='rgba(0, 0, 255, 0.1)', yaxis='y3'))
+    
+#     navndict = {
+#         'air_temperature': 'Temperatur',
+#          'wind_speed': 'Vindhastighet', 
+#          'sum(precipitation_amount PT10M)': 'Nedbør', 
+#          'wind_from_direction': 'Vindretning',
+#          'surface_snow_thickness': 'Snødybde'
+#          }
+    
+#     fig.add_trace(go.Bar(x=samledf.index, y=samledf['sum(precipitation_amount PT10M)'], name='Nedbør', width=1000 * 3600 * 1, yaxis='y2'))
+    
+#     fig.add_trace(go.Scatter(x=samledf.index, y=samledf['air_temperature'], name='Temperatur', mode='lines'))
+#     fig.add_trace(go.Scatter(x=samledf.index, y=samledf['wind_speed'], name='Vindhastighet', mode='lines'))
+
+#     fig.update_layout(
+#         yaxis=dict(
+#             title='Temperatur',
+#             titlefont=dict(
+#                 color='rgb(148, 103, 189)'
+#             ),
+#             tickfont=dict(
+#                 color='rgb(148, 103, 189)'
+#             )
+#         ),
+#         yaxis2=dict(
+#             title='Nedbør',
+#             titlefont=dict(
+#                 color='rgb(148, 103, 189)'
+#             ),
+#             tickfont=dict(
+#                 color='rgb(148, 103, 189)'
+#             ),
+#             overlaying='y',
+#             side='right'
+#         ),
+#         yaxis3=dict(
+#             title='Kumulativ nedbør',
+#             titlefont=dict(
+#                 color='rgb(148, 103, 189)'
+#             ),
+#             tickfont=dict(
+#                 color='rgb(148, 103, 189)'
+#             ),
+#             overlaying='y',
+#             side='right'
+#         ),
+#     )
+#     return fig
+    
+
+def met_og_ein_stasjon_plot(lat, lon, navn, altitude, stasjonsid, elements, dager_etter_met=2, dager_tidligere_frost=2):   
     vaer = Place(navn, lat, lon, altitude)
     vaer_forecast = Forecast(vaer, user_agent)
     vaer_forecast.update()
@@ -302,14 +371,72 @@ def met_og_ein_stasjon_plot(lat, lon, navn, altitude, stasjonsid, elements,  dag
     nedbør_cumsum = np.cumsum(nedbør).tolist()
     time_temperatur, met_temperatur = metno_temperatur(vaer_forecast, dager_etter_met)
 
-    dfliste = []
-    for element in elements:
-        df_temp = frost_api(stasjonsid, dager_tidligere_frost, element, timeoffsets='PT0H')
-        df_temp = bearbeid_frost(df_temp, element)
-        dfliste.append(df_temp)
+    df = frost_api(stasjonsid, dager_tidligere_frost, elements, timeoffsets='PT0H')
+    df_bearbeida = bearbeid_frost(df)
+    samledf = frost_samledf(df_bearbeida)
 
-    frost_df = frost_samledf(dfliste)
-    print(frost_df)
-    return frost_df
-    
+    # Define a color palette
+    temperature_color = 'rgba(255, 165, 0, 0.8)'  # orange
+    precipitation_color = 'rgba(0, 123, 255, 0.8)'  # blue
+    wind_color = 'rgba(40, 167, 69, 0.8)'  # green
 
+    # Create the figure
+    fig = go.Figure()
+
+    # Plotting precipitation from YR
+    fig.add_trace(go.Bar(x=time_nebør, y=nedbør, name='Nedbør (YR)', width=1000 * 3600,
+                         yaxis='y2', marker_color=precipitation_color))
+
+    # Plotting temperature from YR
+    fig.add_trace(go.Scatter(x=time_temperatur, y=met_temperatur, mode='lines',
+                             name='temperatur (YR)', line=dict(color=temperature_color)))
+
+    # Plotting cumulative precipitation from YR
+    fig.add_trace(go.Scatter(x=time_nebør, y=nedbør_cumsum, mode='lines+markers',
+                             name='Kumulativ nedbør (YR)', fill='tozeroy', 
+                             fillcolor='rgba(0, 0, 255, 0.1)', yaxis='y3'))
+
+    # Plotting other data from the samledf DataFrame
+    fig.add_trace(go.Bar(x=samledf.index, y=samledf['sum(precipitation_amount PT10M)'],
+                         name='Nedbør', width=1000 * 3600, yaxis='y2', marker_color=precipitation_color))
+
+    fig.add_trace(go.Scatter(x=samledf.index, y=samledf['air_temperature'], name='Temperatur',
+                             mode='lines', line=dict(color=temperature_color)))
+
+    fig.add_trace(go.Scatter(x=samledf.index, y=samledf['wind_speed'], name='Vindhastighet',
+                             mode='lines', line=dict(color=wind_color)))
+
+    # Update the layout to incorporate the design principles
+    fig.update_layout(
+        title='Weather Data Visualization',
+        yaxis=dict(
+            title='Temperatur',
+            titlefont=dict(size=14, color=temperature_color),
+            tickfont=dict(size=12, color=temperature_color)
+        ),
+        yaxis2=dict(
+            title='Nedbør',
+            titlefont=dict(size=14, color=precipitation_color),
+            tickfont=dict(size=12, color=precipitation_color),
+            overlaying='y',
+            side='right'
+        ),
+        yaxis3=dict(
+            title='Kumulativ nedbør',
+            titlefont=dict(size=14, color='rgba(0, 0, 255, 0.8)'),
+            tickfont=dict(size=12, color='rgba(0, 0, 255, 0.8)'),
+            overlaying='y',
+            side='right',
+            showgrid=False  # Hide gridlines for this axis
+        ),
+        legend=dict(x=0.1, y=1.1, orientation='h'),
+        margin=dict(l=100, r=100, t=100, b=100),  # Adjust margins to fit legend and title
+        font=dict(family='Arial, sans-serif'),
+        paper_bgcolor='white',  # Set background color to white for contrast
+        plot_bgcolor='white'    # Set plot background color to white
+    )
+
+    # Add annotations if necessary
+    # e.g., fig.add_annotation(x=..., y=..., text='Annotation', showarrow=True, arrowhead=1)
+
+    return fig
