@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from .apidata.snowsense import hent_snowsense
-from .apidata.vaerplot import vaerplot, met_plot, vindrose_stasjon, met_og_ein_stasjon_plot
+from .apidata.vaerplot import vaerplot, met_plot, vindrose_stasjon, met_og_ein_stasjon_plot, frost_samledf
 import json
 
 værstasjoner = {
@@ -45,10 +45,14 @@ andre_stasjoner = {
 def index(request):
     yrsvg1 = 'https://www.yr.no/nb/innhold/1-2205713/meteogram.svg'  #Kvitenova
     yrsvg2 = 'https://www.yr.no/nb/innhold/1-169829/meteogram.svg'
+    yrlink1 = 'https://www.yr.no/nb/detaljer/graf/1-2205713'
+    yrlink2 =  'https://www.yr.no/nb/detaljer/graf/1-169829'
 
     return render(request, 'vaerdata/vaerdata.html', {
         'yrsvg1': yrsvg1,
-        'yrsvg2': yrsvg2,})
+        'yrsvg2': yrsvg2,
+        'yrlink1': yrlink1,
+        'yrlink2': yrlink2,})
 
 def index_gammel(request):
     yrsvg1 = 'https://www.yr.no/nb/innhold/1-2205713/meteogram.svg'  #Kvitenova
@@ -83,9 +87,10 @@ def get_graph1(request):
     })
 
 def met_frost_plot1(request):
-    fig_df = met_og_ein_stasjon_plot(værstasjoner[58703]['lat'], værstasjoner[58703]['lon'], værstasjoner[58703]['navn'], værstasjoner[58703]['altitude'], 58703, værstasjoner[58703]['elements'])
+    fig = met_og_ein_stasjon_plot(værstasjoner[58703]['lat'], værstasjoner[58703]['lon'], værstasjoner[58703]['navn'], værstasjoner[58703]['altitude'], 58703, værstasjoner[58703]['elements'])
+    fig_json = json.loads(fig.to_json())
     return JsonResponse({
-        'fig_df': fig_df
+        'fig_json': fig_json
     })
     
 
