@@ -52,7 +52,9 @@ def index(request):
         'yrsvg1': yrsvg1,
         'yrsvg2': yrsvg2,
         'yrlink1': yrlink1,
-        'yrlink2': yrlink2,})
+        'yrlink2': yrlink2,
+        'station1': '58705',
+        'station2' : '58703'})
 
 def index_gammel(request):
     yrsvg1 = 'https://www.yr.no/nb/innhold/1-2205713/meteogram.svg'  #Kvitenova
@@ -94,8 +96,8 @@ def met_frost_plot1(request):
     })
     
 
-def vindrose_stasjon_data(request):
-    fig = vindrose_stasjon(58705, dager_tidligere=1)
+def vindrose_stasjon_data(request, station):
+    fig = vindrose_stasjon(station, dager_tidligere=1)
     
     fig_json = json.loads(fig.to_json())
 

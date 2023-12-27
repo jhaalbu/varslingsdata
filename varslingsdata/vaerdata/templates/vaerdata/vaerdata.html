@@ -76,7 +76,7 @@
             <div id="vindrose1"></div>
         </div>
         <div class="col-lg-6 box">
-            Windrose stasjon 2
+            <div id="vindrose2"></div>
         </div>
     </div>
 </div>
@@ -101,7 +101,9 @@
                 document.getElementById('snowdepth_atp').textContent = data.snowsense_data[8];
                 // ... (update the rest of the table cells)
             })
-        fetch('{% url "vindrose_stasjon_data" %}')
+        var station1 = "{{ station1 }}"
+        var station2 = "{{ station2 }}"
+        fetch('{% url "vindrose_stasjon_data" station1 %}')
             .then(response => response.json())
             .then(data => {
                 console.log(data); // For debugging purposes
@@ -109,6 +111,15 @@
                 // Plot the first graph
                 var graph1 = document.getElementById('vindrose1');
                 Plotly.newPlot(vindrose1, data.fig_json);
+            })
+        fetch('{% url "vindrose_stasjon_data" station2 %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // For debugging purposes
+
+                // Plot the first graph
+                var graph1 = document.getElementById('vindrose2');
+                Plotly.newPlot(vindrose2, data.fig_json);
             })
         fetch('{% url "met_frost_plot1" %}')
             .then(response => response.json())
